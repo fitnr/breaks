@@ -41,6 +41,22 @@ def make_meta(source, outfile, bin_field):
 
 
 def breaks(infile, outfile, method, data_field, k=None, **kwargs):
+    '''
+    Calculate bins on <infile> via <method>.
+    
+    Args:
+        infile (str): path
+        outfile (str): path
+        method (str): a valid pysal.esda.mapclassify method
+        data_field (str): field in <infile> to read
+        k (int): number of bins to create (default: 5)
+        bin_field (str): field in <outfile> to create (default: bin)
+        bins (list): Upper bounds of bins to use in User_Defined classifying.
+                     Overrides method and k.
+
+    Returns:
+        mapclassify bins instance
+    '''
     k = k or 5
     bin_field = kwargs.pop('bin_field', 'bin')
 
