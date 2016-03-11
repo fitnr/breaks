@@ -10,11 +10,24 @@ language: python
 python:
     - 2.7
     - 3.3
-    - 3.4
+    - 3.5
+
+os:
+ - linux
+
+before_install:
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew update; fi
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew list gdal || brew install gdal; fi
+    - if [[ $TRAVIS_OS_NAME == "osx" ]]; then brew list scipy || brew install scipy --with-openblas; fi
+    - if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo apt-get -q update; fi
+    - if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo apt-get -q install -y libgdal1-dev libblas-dev liblapack-dev; fi
+    - if [[ $TRAVIS_OS_NAME == "linux" ]]; then sudo apt-get -q install -y python-numpy python-scipy; fi
+    - pip install docutils coverage
 
 install:
     - python setup.py install
-    - pip install coverage
 
 script:
     - make test
+
+
