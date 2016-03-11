@@ -13,7 +13,10 @@ import breaks
 
 
 class TestCase(unittest.TestCase):
-    pass
+
+    def testBreaks(self):
+        assert breaks.bisect([1, 10, 20, 30], 25) == 3
+        assert breaks.bisect([1, 10, 20, 30], None) is None
 
 if __name__ == '__main__':
     unittest.main()
