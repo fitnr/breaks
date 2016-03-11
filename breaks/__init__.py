@@ -55,15 +55,13 @@ def breaks(infile, outfile, method, data_field, k=None, **kwargs):
             data = [f['properties'][data_field] for f in contents if f['properties'][data_field] is not None]
             classes = getattr(mapclassify, method)(np.array(data), k)
 
-        k = len(classes.bins) - 1
-
         with fiona.open(outfile, 'w', **meta) as sink:
             for f in contents:
                 value = f['properties'][data_field]
                 if value is None:
                     f['properties'][bin_field] = None
                 else:
-                    f['properties'][bin_field] = min(k, bisect_left(classes.bins, value))
+                    f['properties'][bin_field] = bisect_left(classes.bins, value)
 
                 sink.write(f)
 
