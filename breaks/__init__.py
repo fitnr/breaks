@@ -17,7 +17,6 @@ from pysal.esda import mapclassify
 __version__ = '0.1.0'
 
 METHODS = (
-    'Box_Plot',
     'Equal_Interval',
     'Fisher_Jenks',
     'Jenks_Caspall',
@@ -27,8 +26,6 @@ METHODS = (
     'Maximum_Breaks',
     'Natural_Breaks',
     'Quantiles',
-    'Percentiles',
-    'Std_Mean',
 )
 
 
@@ -47,6 +44,10 @@ def breaks(infile, outfile, method, data_field, k=None, **kwargs):
     k = k or 5
     bin_field = kwargs.pop('bin_field', 'bin')
 
+    if kwargs.get('bins'):
+        method = 'User_Defined'
+        k = kwargs.pop('bins')
+
     with fiona.drivers():
         with fiona.open(infile) as source:
             meta = make_meta(source, outfile, bin_field)
@@ -54,8 +55,16 @@ def breaks(infile, outfile, method, data_field, k=None, **kwargs):
             data = [f['properties'][data_field] for f in contents if f['properties'][data_field] is not None]
             classes = getattr(mapclassify, method)(np.array(data), k)
 
+        k = len(classes.bins) - 1
+
         with fiona.open(outfile, 'w', **meta) as sink:
             for f in contents:
                 value = f['properties'][data_field]
-                f['properties'][bin_field] = None if value is None else bisect_left(classes.bins, value)
+                if value is None:
+                    f['properties'][bin_field] = None
+                else:
+                    f['properties'][bin_field] = min(k, bisect_left(classes.bins, value))
+
                 sink.write(f)
+
+    return classes.bins.tolist()
