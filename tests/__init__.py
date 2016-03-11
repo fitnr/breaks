@@ -6,4 +6,4 @@
 
 # Licensed under the GPL license:
 # https://opensource.org/licenses/GPL-3.0
-# Copyright (c) 2016, fitnr <contact@fakeisthenewreal.org>
+# Copyright (c) 2016, Neil Freeman <contact@fakeisthenewreal.org>

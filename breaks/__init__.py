@@ -6,7 +6,7 @@
 
 # Licensed under the GPL license:
 # https://opensource.org/licenses/GPL-3.0
-# Copyright (c) 2016, fitnr <contact@fakeisthenewreal.org>
+# Copyright (c) 2016, Neil Freeman <contact@fakeisthenewreal.org>
 
 from bisect import bisect_left
 import numpy as np
@@ -43,7 +43,7 @@ def make_meta(source, outfile, bin_field):
 def breaks(infile, outfile, method, data_field, k=None, **kwargs):
     '''
     Calculate bins on <infile> via <method>.
-    
+
     Args:
         infile (str): path
         outfile (str): path
