@@ -29,18 +29,19 @@ METHODS = (
 )
 
 
-def make_meta(source, outfile, bin_field):
-    meta = {
-        'crs': source.crs,
-        'driver': fionautil.drivers.from_path(outfile),
-        'schema': source.schema,
-    }
-    meta['schema']['properties'][bin_field] = 'int'
-
-    return meta
+def bisect(bins, value):
+    if value is None:
+        return None
+    return bisect_left(bins, value)
 
 
-def breaks(infile, outfile, method, data_field, k=None, **kwargs):
+def write(outfile, features, **kwargs):
+    kwargs['driver'] = fionautil.drivers.from_path(outfile)
+    with fiona.open(outfile, 'w', **kwargs) as sink:
+        sink.writerecords(features)
+
+
+def breaks(infile, outfile, method, data_field, k=None, bin_field=None, **kwargs):
     '''
     Calculate bins on <infile> via <method>.
 
@@ -58,27 +59,32 @@ def breaks(infile, outfile, method, data_field, k=None, **kwargs):
         mapclassify bins instance
     '''
     k = k or 5
-    bin_field = kwargs.pop('bin_field', 'bin')
+    bin_field = 'bin' or bin_field
 
     if kwargs.get('bins'):
         method = 'User_Defined'
         k = kwargs.pop('bins')
 
+    classify = getattr(mapclassify, method)
+
     with fiona.drivers():
         with fiona.open(infile) as source:
-            meta = make_meta(source, outfile, bin_field)
-            contents = list(source)
-            data = [f['properties'][data_field] for f in contents if f['properties'][data_field] is not None]
-            classes = getattr(mapclassify, method)(np.array(data), k)
+            meta = {
+                'schema': source.schema,
+                'crs': source.crs,
+            }
 
-        with fiona.open(outfile, 'w', **meta) as sink:
-            for f in contents:
-                value = f['properties'][data_field]
-                if value is None:
-                    f['properties'][bin_field] = None
-                else:
-                    f['properties'][bin_field] = bisect_left(classes.bins, value)
+            if data_field not in source.schema:
+                raise ValueError('Data field not found: %s', data_field)
 
-                sink.write(f)
+            features = list(source)
+            data = [f['properties'][data_field] for f in features if f['properties'][data_field] is not None]
+            classes = classify(np.array(data), k)
+
+        for f in features:
+            f['properties'][bin_field] = bisect(classes.bins, f['properties'][data_field])
+
+        meta['schema']['properties'][bin_field] = 'int'
+        write(outfile, features, **meta)
 
     return classes
