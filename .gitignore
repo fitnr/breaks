@@ -1,0 +1,50 @@
+# This file is part of breaks.
+# https://github.com/fitnr/breaks
+
+# Licensed under the GPL license:
+# https://opensource.org/licenses/GPL-3.0
+# Copyright (c) 2016, fitnr <contact@fakeisthenewreal.org>
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Distribution / packaging
+.Python
+env/
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+.eggs
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.cache
+
+# Sphinx documentation
+docs/_build/
+
+*.css
+*.cpg
+*.dbf
+*.iso.xml
+*.prj
+*.sh[xp]
+*.svg
+*.png
