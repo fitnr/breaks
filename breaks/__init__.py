@@ -67,4 +67,4 @@ def breaks(infile, outfile, method, data_field, k=None, **kwargs):
 
                 sink.write(f)
 
-    return classes.bins.tolist()
+    return classes

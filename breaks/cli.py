@@ -34,4 +34,4 @@ def main(infile, outfile, method, **kwargs):
         kwargs['bins'] = sorted(float(x) for x in kwargs['bins'].split(','))
     bins = breaks(infile, outfile, method.title(), **kwargs)
 
-    print(', '.join(str(x) for x in bins), file=sys.stderr)
+    print(bins, file=sys.stderr)
