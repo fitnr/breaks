@@ -74,8 +74,8 @@ def breaks(infile, outfile, method, data_field, k=None, bin_field=None, **kwargs
                 'crs': source.crs,
             }
 
-            if data_field not in source.schema:
-                raise ValueError('Data field not found: %s', data_field)
+            if data_field not in source.schema['properties']:
+                raise ValueError('data field not found: {}'.format(data_field))
 
             features = list(source)
             data = [f['properties'][data_field] for f in features if f['properties'][data_field] is not None]

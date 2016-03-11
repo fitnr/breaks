@@ -29,5 +29,8 @@ install:
 
 script:
     - make test
+    - make bins.shp
+    - make bins.json
 
-
+after_script:
+    - grep bins bins.json > /dev/null && echo bins
