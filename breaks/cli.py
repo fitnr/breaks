@@ -12,8 +12,6 @@ from os import environ
 import click
 from . import __version__, breaks, METHODS
 
-environ['CPL_MAX_ERROR_REPORTS'] = '5'
-
 
 @click.command()
 @click.argument('infile', metavar='input', type=click.Path(exists=True))
@@ -28,3 +26,7 @@ environ['CPL_MAX_ERROR_REPORTS'] = '5'
 def main(infile, outfile, method, **kwargs):
     '''Write a geodata file with bins based on a data field'''
     breaks(infile, outfile, method.title(), **kwargs)
+
+    if 'CPL_MAX_ERROR_REPORTS' not in environ:
+        environ['CPL_MAX_ERROR_REPORTS'] = '5'
+
