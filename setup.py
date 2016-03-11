@@ -46,11 +46,12 @@ setup(
         'scipy >=0.15.1, <0.20',
         'pysal >=1.11.0, <1.12',
         'fiona >=1.6.0, <2.0',
-        'fionautil >=0.5.0, <0.6.0',
+        'fionautil >=0.5.1, <0.6.0',
+        'click >=6.2, <7',
     ],
     entry_points={
         'console_scripts': [
-            'breaks=breaks.breaks:main',
+            'breaks=breaks.cli:main',
         ],
     },
     test_suite='tests',
