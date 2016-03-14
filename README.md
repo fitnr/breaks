@@ -23,7 +23,7 @@ This writes a file called `data_binned.shp` which is a copy of `data.shp`, but w
 
 Add decile bins on 'fieldname':
 ```
-breaks -k 10 data.shp fieldname data_binned.json
+breaks -k 10 data.shp fieldname data_binned.geojson
 ```
 
 Add five [Fisher-Jenks](https://en.wikipedia.org/wiki/Jenks_natural_breaks_optimization) bins on 'fieldname':
@@ -33,12 +33,18 @@ breaks --method fisher_jenks data.json fieldname data_binned.json
 
 Add decile bins on 'fieldname' to a field called 'mybin':
 ```
-breaks --bin-field mybin data.json fieldname data_binned.json
+breaks --bin-field mybin data.geojson fieldname data_binned.geojson
+```
+
+Divide one field by another. If you have more complicated manipulations you would like to work, alter your data with `ogr2ogr` or another tool. 
+```
+# Calculates bins for population / area
+breaks data.geojson population data_binned.geojson --norm-field area
 ```
 
 Add custom bins on 'fieldname':
 ```
-breaks --bins 50,75,150,250,500 data.json fieldname data_binned.json
+breaks --bins 50,75,150,250,500 data.geojson fieldname data_binned.shp
 ```
 (Give the upper-bounds as a comma-separated list.)
 
@@ -59,6 +65,7 @@ Options:
                          natural_breaks
                          quantiles (default)
   -b, --bin-field FIELD  name of new field
+  -n, --norm-field FIELD  Normalize (divide) bin-field by this name field
   -k COUNT               Number of bins (default: 5)
   -B, --bins TEXT        Comma-separated list of breaks (a series of upper-
                          bounds)

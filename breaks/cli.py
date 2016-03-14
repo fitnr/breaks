@@ -22,6 +22,8 @@ from . import __version__, breaks, METHODS
               type=click.Choice([m.lower() for m in METHODS]),
               help='Binning method:\n' + '\n'.join(m.lower() for m in METHODS) + ' (default)')
 @click.option('-b', '--bin-field', type=str, metavar='FIELD', default='bin', help='name of new field')
+@click.option('-n', '--norm-field', type=str, metavar='FIELD', default=None,
+              help='Normalize (divide) bin-field by this name field')
 @click.option('-k', type=int, metavar='COUNT', default=5, help='Number of bins (default: 5)')
 @click.option('-B', '--bins', type=str, help='Comma-separated list of breaks (a series of upper-bounds)')
 @click.version_option(version=__version__, message='%(prog)s %(version)s')

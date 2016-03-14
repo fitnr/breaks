@@ -54,7 +54,7 @@ def breaks(infile, outfile, method, data_field, k=None, bin_field=None, **kwargs
         bin_field (str): field in <outfile> to create (default: bin)
         bins (list): Upper bounds of bins to use in User_Defined classifying.
                      Overrides method and k.
-
+        norm_field (str): Field to divide data_field by (both will be coerced to float).
     Returns:
         mapclassify bins instance
     '''
@@ -67,6 +67,18 @@ def breaks(infile, outfile, method, data_field, k=None, bin_field=None, **kwargs
 
     classify = getattr(mapclassify, method)
 
+    if kwargs.get('norm_field'):
+        norm_field = kwargs.get('norm_field')
+
+        def get(f):
+            try:
+                return float(f['properties'][data_field]) / float(f['properties'][norm_field])
+            except TypeError:
+                return None
+    else:
+        def get(f):
+            return f['properties'][data_field]
+
     with fiona.drivers():
         with fiona.open(infile) as source:
             meta = {
@@ -77,12 +89,15 @@ def breaks(infile, outfile, method, data_field, k=None, bin_field=None, **kwargs
             if data_field not in source.schema['properties']:
                 raise ValueError('data field not found: {}'.format(data_field))
 
+            if kwargs.get('norm_field') and norm_field not in source.schema['properties']:
+                raise ValueError('normalization field not found: {}'.format(norm_field))
+
             features = list(source)
-            data = [f['properties'][data_field] for f in features if f['properties'][data_field] is not None]
-            classes = classify(np.array(data), k)
+            data = (get(f) for f in features)
+            classes = classify(np.array([d for d in data if d is not None]), k)
 
         for f in features:
-            f['properties'][bin_field] = bisect(classes.bins, f['properties'][data_field])
+            f['properties'][bin_field] = bisect(classes.bins, get(f))
 
         meta['schema']['properties'][bin_field] = 'int'
         write(outfile, features, **meta)
