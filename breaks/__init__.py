@@ -16,60 +16,36 @@ from pysal.esda import mapclassify
 
 __version__ = '0.1.1'
 
-METHODS = (
-    'Equal_Interval',
-    'Fisher_Jenks',
-    'Jenks_Caspall',
-    'Jenks_Caspall_Forced',
-    'Jenks_Caspall_Sampled',
-    'Max_P_Classifier',
-    'Maximum_Breaks',
-    'Natural_Breaks',
-    'Quantiles',
+LOWER_METHODS = (
+    'equal_interval',
+    'fisher_jenks',
+    'jenks_caspall',
+    'jenks_caspall_forced',
+    'jenks_caspall_sampled',
+    'max_p_classifier',
+    'maximum_breaks',
+    'natural_breaks',
+    'quantiles',
 )
 
 
 def bisect(bins, value):
+    '''Bisect left, returning None if value is None.'''
     if value is None:
         return None
     return bisect_left(bins, value)
 
 
 def write(outfile, features, **kwargs):
+    '''Use Fiona to write features to <outfile>. Kewyord args should be Fiona meta arguments.'''
     kwargs['driver'] = fionautil.drivers.from_path(outfile)
     with fiona.open(outfile, 'w', **kwargs) as sink:
         sink.writerecords(features)
 
 
-def breaks(infile, outfile, method, data_field, k=None, bin_field=None, **kwargs):
-    '''
-    Calculate bins on <infile> via <method>.
-
-    Args:
-        infile (str): path
-        outfile (str): path
-        method (str): a valid pysal.esda.mapclassify method
-        data_field (str): field in <infile> to read
-        k (int): number of bins to create (default: 5)
-        bin_field (str): field in <outfile> to create (default: bin)
-        bins (list): Upper bounds of bins to use in User_Defined classifying.
-                     Overrides method and k.
-        norm_field (str): Field to divide data_field by (both will be coerced to float).
-    Returns:
-        mapclassify bins instance
-    '''
-    k = k or 5
-    bin_field = 'bin' or bin_field
-
-    if kwargs.get('bins'):
-        method = 'User_Defined'
-        k = kwargs.pop('bins')
-
-    classify = getattr(mapclassify, method)
-
-    if kwargs.get('norm_field'):
-        norm_field = kwargs.get('norm_field')
-
+def getter(data_field, norm_field=None):
+    '''Returns a function for getting data value from a feature.'''
+    if norm_field:
         def get(f):
             try:
                 return float(f['properties'][data_field]) / float(f['properties'][norm_field])
@@ -79,27 +55,122 @@ def breaks(infile, outfile, method, data_field, k=None, bin_field=None, **kwargs
         def get(f):
             return f['properties'][data_field]
 
+    return get
+
+
+def setter(bins, data_field, bin_field, **kwargs):
+    '''Returns a function for creating an output feature.'''
+    norm_field = kwargs.get('norm_field')
+    id_field = kwargs.get('id_field')
+    geometry = kwargs.get('geometry', True)
+
+    get = getter(data_field, norm_field)
+
+    def _set(feature):
+        f = dict()
+
+        if id_field:
+            f['properties'][id_field] = feature['properties'][id_field]
+            f['properties'][data_field] = feature['properties'][data_field]
+
+            if norm_field:
+                f['properties'][norm_field] = feature['properties'][norm_field]
+        else:
+            f['properties'] = feature['properties']
+
+        if geometry:
+            f['geometry'] = feature['geometry']
+
+        f['properties'][bin_field] = bisect(bins, get(feature))
+
+    return _set
+
+
+def binfeatures(features, method, data_field, k, bin_field=None, **kwargs):
+    '''Classify input features according to <method>'''
+    bin_field = 'bin' or bin_field
+
+    if kwargs.get('bins'):
+        method = 'User_Defined'
+        k = kwargs.pop('bins')
+
+    classify = getattr(mapclassify, method)
+
+    get = getter(data_field, kwargs.get('norm_field'))
+
+    data = (get(f) for f in features)
+
+    return classify(np.array([d for d in data if d is not None]), k)
+
+
+def get_features(infile, fields=None):
+    '''
+    Return the features of <infile>. Includes error checking that given fields exist.
+
+    Args:
+        infile (str): path
+        fields (Sequence): Check that these fields exist in <infile>.
+                            Raises ValueError if one doesn't appear.
+
+    Returns:
+        (tuple) list of features and Fiona metadata for <infile>
+    '''
+    fields = fields or []
     with fiona.drivers():
         with fiona.open(infile) as source:
+            try:
+                for f in fields:
+                    assert f in source.schema['properties']
+            except AssertionError:
+                raise ValueError('field not found in {}: {}'.format(infile, f))
+
             meta = {
                 'schema': source.schema,
                 'crs': source.crs,
             }
 
-            if data_field not in source.schema['properties']:
-                raise ValueError('data field not found: {}'.format(data_field))
-
-            if kwargs.get('norm_field') and norm_field not in source.schema['properties']:
-                raise ValueError('normalization field not found: {}'.format(norm_field))
-
             features = list(source)
-            data = (get(f) for f in features)
-            classes = classify(np.array([d for d in data if d is not None]), k)
 
-        for f in features:
-            f['properties'][bin_field] = bisect(classes.bins, get(f))
+    return features, meta
 
-        meta['schema']['properties'][bin_field] = 'int'
-        write(outfile, features, **meta)
 
-    return classes
+def breaks(infile, outfile, method, data_field, **kwargs):
+    '''
+    Calculate bins on <infile> via <method>, writing result to <outfile>.
+    This is essentially a wrapper for exactly what the breaks CLI does.
+
+    Args:
+        infile (str): path to input file
+        outfile (str): path to output file
+        method (str): a valid pysal.esda.mapclassify method
+        data_field (str): field in <infile> to read
+        k (int): number of bins to create (default: 5)
+        bin_field (str): field in <outfile> to create (default: bin)
+        bins (list): Upper bounds of bins to use in User_Defined classifying.
+                     Overrides method and k.
+        norm_field (str): Field to divide data_field by (both will be coerced to float).
+
+    Returns:
+        mapclassify bins instance
+    '''
+    if kwargs.get('bins'):
+        kwargs['bins'] = sorted(float(x) for x in kwargs['bins'].split(','))
+
+    bin_field = kwargs.pop('bin_field', 'bin')
+    kwargs['k'] = kwargs.get('k', 5)
+
+    fields = (kwargs.get('data_field'), kwargs.get('norm_field'), kwargs.get('id_field'))
+
+    features, meta = get_features(infile, [f for f in fields if f is not None])
+
+    meta['schema']['properties'][bin_field] = 'int'
+
+    classes = binfeatures(features, method.title(), data_field, **kwargs)
+
+    create = setter(classes.bins, data_field, **kwargs)
+
+    new_features = (create(f) for f in features)
+
+    write(outfile, new_features, **meta)
+
+    return classes.bins
