@@ -167,7 +167,8 @@ def breaks(infile, outfile, method, data_field, **kwargs):
     features, meta = get_features(infile, fields)
 
     if id_field:
-        meta['schema']['properties'] = OrderedDict((k, v) for k, v in meta['schema']['properties'] if k in fields)
+        p = meta['schema']['properties']
+        meta['schema']['properties'] = OrderedDict((k, v) for k, v in p.items() if k in fields)
 
     meta['schema']['properties'][bin_field] = 'int'
 
