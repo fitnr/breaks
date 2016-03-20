@@ -36,8 +36,9 @@ def main(infile, outfile, **kwargs):
     if 'CPL_MAX_ERROR_REPORTS' not in environ:
         environ['CPL_MAX_ERROR_REPORTS'] = '5'
 
-    if kwargs['geometry'] is False and kwargs['id-field'] is None:
-        raise ValueError('--no-geometry requires --id-field')
+    if kwargs['geometry'] is False and kwargs.get('id_field') is None:
+        print('error: --no-geometry requires --id-field')
+        sys.exit(1)
 
     result = breaks(infile, outfile, **kwargs)
 
