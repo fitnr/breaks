@@ -63,12 +63,14 @@ def setter(bins, data_field, bin_field, **kwargs):
     '''Returns a function for creating an output feature.'''
     norm_field = kwargs.get('norm_field')
     id_field = kwargs.get('id_field')
-    geometry = kwargs.get('geometry', True)
 
     get = getter(data_field, norm_field)
 
     def _set(feature):
-        f = {'properties': {}}
+        f = {
+            'properties': {},
+            'geometry': feature['geometry']
+        }
 
         if id_field:
             f['properties'][id_field] = feature['properties'][id_field]
@@ -78,9 +80,6 @@ def setter(bins, data_field, bin_field, **kwargs):
                 f['properties'][norm_field] = feature['properties'][norm_field]
         else:
             f['properties'] = feature['properties']
-
-        if geometry:
-            f['geometry'] = feature['geometry']
 
         f['properties'][bin_field] = bisect(bins, get(feature))
 
@@ -161,10 +160,10 @@ def breaks(infile, outfile, method, data_field, **kwargs):
 
     bin_field = kwargs.pop('bin_field', 'bin')
     id_field = kwargs.get('id_field')
+    norm_field = kwargs.get('norm_field')
     kwargs['k'] = kwargs.get('k', 5)
 
-    fn = (data_field, kwargs.get('norm_field'), kwargs.get('id_field'))
-    fields = [f for f in fn if f is not None]
+    fields = [f for f in (data_field, id_field, norm_field) if f is not None]
     features, meta = get_features(infile, fields)
 
     if id_field:
@@ -174,10 +173,7 @@ def breaks(infile, outfile, method, data_field, **kwargs):
 
     classes = binfeatures(features, method.title(), data_field, **kwargs)
 
-    create = setter(classes.bins, data_field, bin_field=bin_field,
-                    norm_field=kwargs.get('norm_field'),
-                    id_field=kwargs.get('id_field'),
-                    geometry=kwargs.get('geometry'))
+    create = setter(classes.bins, data_field, bin_field, id_field=id_field, norm_field=norm_field)
 
     new_features = (create(f) for f in features)
     write(outfile, new_features, **meta)

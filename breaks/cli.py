@@ -27,17 +27,11 @@ from . import __version__, LOWER_METHODS, breaks
 @click.option('-B', '--bins', type=str, help='Comma-separated list of breaks (a series of upper-bounds)')
 @click.option('-i', '--id-field', type=str, metavar='FIELD', default=None,
               help='If given, only write this field, bin-field, and data-field (and norm-field, if given).')
-@click.option('-g/-L', '--geometry/--no-geometry', default=True,
-              help='Set to no-geometry to omit writing geometry (in which case, id-field must be given)')
 @click.version_option(version=__version__, message='%(prog)s %(version)s')
 def main(infile, outfile, **kwargs):
     '''Write a geodata file with bins based on a data field.'''
     # Set OGR error reporting limit
     environ['CPL_MAX_ERROR_REPORTS'] = environ.get('CPL_MAX_ERROR_REPORTS', '5')
-
-    if kwargs['geometry'] is False and kwargs.get('id_field') is None:
-        print('error: --no-geometry requires --id-field')
-        sys.exit(1)
 
     result = breaks(infile, outfile, **kwargs)
 
