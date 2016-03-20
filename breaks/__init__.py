@@ -9,6 +9,7 @@
 # Copyright (c) 2016, Neil Freeman <contact@fakeisthenewreal.org>
 
 from bisect import bisect_left
+from collections import OrderedDict
 import numpy as np
 import fiona
 import fionautil.drivers
@@ -67,7 +68,7 @@ def setter(bins, data_field, bin_field, **kwargs):
     get = getter(data_field, norm_field)
 
     def _set(feature):
-        f = dict()
+        f = {'properties': {}}
 
         if id_field:
             f['properties'][id_field] = feature['properties'][id_field]
@@ -82,6 +83,8 @@ def setter(bins, data_field, bin_field, **kwargs):
             f['geometry'] = feature['geometry']
 
         f['properties'][bin_field] = bisect(bins, get(feature))
+
+        return f
 
     return _set
 
@@ -157,19 +160,26 @@ def breaks(infile, outfile, method, data_field, **kwargs):
         kwargs['bins'] = sorted(float(x) for x in kwargs['bins'].split(','))
 
     bin_field = kwargs.pop('bin_field', 'bin')
+    id_field = kwargs.get('id_field')
     kwargs['k'] = kwargs.get('k', 5)
 
-    fn = ('data_field', 'norm_field' 'id_field')
-    fields = (kwargs.get(f) for f in fn if kwargs.get(f))
+    fn = (data_field, kwargs.get('norm_field'), kwargs.get('id_field'))
+    fields = [f for f in fn if f is not None]
     features, meta = get_features(infile, fields)
+
+    if id_field:
+        meta['schema']['properties'] = OrderedDict((k, v) for k, v in meta['schema']['properties'] if k in fields)
 
     meta['schema']['properties'][bin_field] = 'int'
 
     classes = binfeatures(features, method.title(), data_field, **kwargs)
 
-    create = setter(classes.bins, data_field, **kwargs)
+    create = setter(classes.bins, data_field, bin_field=bin_field,
+                    norm_field=kwargs.get('norm_field'),
+                    id_field=kwargs.get('id_field'),
+                    geometry=kwargs.get('geometry'))
 
     new_features = (create(f) for f in features)
     write(outfile, new_features, **meta)
 
-    return classes.bins
+    return classes
