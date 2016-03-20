@@ -13,6 +13,32 @@ pip install breaks
 ```
 
 ## These are the breaks
+````
+Usage: breaks [OPTIONS] input data-field output
+
+  Write a geodata file with bins based on a data field
+
+Options:
+  -m, --method METHOD     Binning method:
+                          equal_interval
+                          fisher_jenks
+                          jenks_caspall
+                          jenks_caspall_forced
+                          jenks_caspall_sampled
+                          max_p_classifier
+                          maximum_breaks
+                          natural_breaks
+                          quantiles (default)
+  -b, --bin-field FIELD   name of new field
+  -n, --norm-field FIELD  Normalize (divide) bin-field by this name field
+  -k COUNT                Number of bins (default: 5)
+  -B, --bins TEXT         Comma-separated list of breaks (a series of upper-
+                          bounds)
+  -i, --id-field FIELD    If given, only write this field, bin-field, and
+                          data-field (and norm-field, if given).
+  --version               Show the version and exit.
+  --help                  Show this message and exit.
+````
 
 Add quintile bins on 'fieldname':
 ```
@@ -48,31 +74,10 @@ breaks --bins 50,75,150,250,500 data.geojson fieldname data_binned.shp
 ```
 (Give the upper-bounds as a comma-separated list.)
 
-````
-Usage: breaks [OPTIONS] input data-field output
-
-  Write a geodata file with bins based on a data field
-
-Options:
-  -m, --method METHOD    Binning method:
-                         equal_interval
-                         fisher_jenks
-                         jenks_caspall
-                         jenks_caspall_forced
-                         jenks_caspall_sampled
-                         max_p_classifier
-                         maximum_breaks
-                         natural_breaks
-                         quantiles (default)
-  -b, --bin-field FIELD  name of new field
-  -n, --norm-field FIELD  Normalize (divide) bin-field by this name field
-  -k COUNT               Number of bins (default: 5)
-  -B, --bins TEXT        Comma-separated list of breaks (a series of upper-
-                         bounds)
-  --version              Show the version and exit.
-  --help                 Show this message and exit.
-
-````
+Only write an ID field and the data fields:
+```
+breaks --id-field GEOID data.shp field1 data_lookup.shp
+```
 
 ## License
 
