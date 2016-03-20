@@ -15,7 +15,7 @@ import fiona
 import fionautil.drivers
 from pysal.esda import mapclassify
 
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 
 LOWER_METHODS = (
     'equal_interval',
