@@ -109,7 +109,7 @@ def get_features(infile, fields=None):
 
     Args:
         infile (str): path
-        fields (Sequence): Check that these fields exist in <infile>.
+        fields (Sequence/Generator): Check that these fields exist in <infile>.
                             Raises ValueError if one doesn't appear.
 
     Returns:
@@ -137,7 +137,7 @@ def get_features(infile, fields=None):
 def breaks(infile, outfile, method, data_field, **kwargs):
     '''
     Calculate bins on <infile> via <method>, writing result to <outfile>.
-    This is essentially a wrapper for exactly what the breaks CLI does.
+    This is essentially a wrapper for what the breaks CLI does.
 
     Args:
         infile (str): path to input file
@@ -159,9 +159,9 @@ def breaks(infile, outfile, method, data_field, **kwargs):
     bin_field = kwargs.pop('bin_field', 'bin')
     kwargs['k'] = kwargs.get('k', 5)
 
-    fields = (kwargs.get('data_field'), kwargs.get('norm_field'), kwargs.get('id_field'))
-
-    features, meta = get_features(infile, [f for f in fields if f is not None])
+    fn = ('data_field', 'norm_field' 'id_field')
+    fields = (kwargs.get(f) for f in fn if kwargs.get(f))
+    features, meta = get_features(infile, fields)
 
     meta['schema']['properties'][bin_field] = 'int'
 
@@ -170,7 +170,6 @@ def breaks(infile, outfile, method, data_field, **kwargs):
     create = setter(classes.bins, data_field, **kwargs)
 
     new_features = (create(f) for f in features)
-
     write(outfile, new_features, **meta)
 
     return classes.bins
