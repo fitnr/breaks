@@ -32,9 +32,8 @@ from . import __version__, LOWER_METHODS, breaks
 @click.version_option(version=__version__, message='%(prog)s %(version)s')
 def main(infile, outfile, **kwargs):
     '''Write a geodata file with bins based on a data field.'''
-
-    if 'CPL_MAX_ERROR_REPORTS' not in environ:
-        environ['CPL_MAX_ERROR_REPORTS'] = '5'
+    # Set OGR error reporting limit
+    environ['CPL_MAX_ERROR_REPORTS'] = environ.get('CPL_MAX_ERROR_REPORTS', '5')
 
     if kwargs['geometry'] is False and kwargs.get('id_field') is None:
         print('error: --no-geometry requires --id-field')
